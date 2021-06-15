@@ -9,7 +9,7 @@ import {
     now,
     original,
     step,
-} from "./common.js";
+} from "../.internal/common.js";
 
 export const elementScroll = (element: Element, options: IScrollToOptions): void => {
     const originalBoundFunc = original.elementScroll.bind(element);

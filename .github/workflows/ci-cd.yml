@@ -1,0 +1,41 @@
+name: CI and CD
+
+on: [push, pull_request]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                  node-version: 14
+            - uses: pnpm/action-setup@v1.2.1
+              with:
+                  version: 5.18.9
+                  run_install: true
+            - run: pnpm run listdiff
+            # - run: pnpm run lint
+            - run: pnpm run esm
+            - run: pnpm run rollup
+
+    publish-npm:
+        needs: build
+        if: startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                  node-version: 14
+                  registry-url: https://registry.npmjs.org/
+            - uses: pnpm/action-setup@v1.2.1
+              with:
+                  version: 5.18.9
+                  run_install: true
+            - run: pnpm run esm
+            - run: pnpm run rollup
+            - run: npm publish
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+

@@ -1,7 +1,7 @@
-import { IAnimationOptions, isObject, isScrollBehaviorSupported, modifyPrototypes, original } from "./common.js";
-import { elementScroll } from "./Element.scroll.js";
+import { IAnimationOptions, isObject, isScrollBehaviorSupported, modifyPrototypes, original } from "../.internal/common.js";
+import { elementScroll } from "./scroll.js";
 
-export { elementScroll as elementScrollTo } from "./Element.scroll.js";
+export { elementScroll as elementScrollTo } from "./scroll.js";
 
 export const elementScrollToPolyfill = (animationOptions?: IAnimationOptions): void => {
     if (isScrollBehaviorSupported()) {

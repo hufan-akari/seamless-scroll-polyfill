@@ -5,8 +5,8 @@ import {
     isScrollBehaviorSupported,
     modifyPrototypes,
     nonFinite,
-} from "./common.js";
-import { elementScroll } from "./Element.scroll.js";
+} from "../.internal/common.js";
+import { elementScroll } from "./scroll.js";
 
 export const elementScrollBy = (element: Element, options: IScrollToOptions): void => {
     const left = nonFinite(options.left || 0) + element.scrollLeft;

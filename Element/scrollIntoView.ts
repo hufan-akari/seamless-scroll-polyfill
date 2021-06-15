@@ -5,8 +5,8 @@ import {
     isScrollBehaviorSupported,
     modifyPrototypes,
     original,
-} from "./common.js";
-import { elementScroll } from "./Element.scroll.js";
+} from "../.internal/common.js";
+import { elementScroll } from "./scroll.js";
 
 const enum ScrollAlignment {
     ToEdgeIfNeeded,

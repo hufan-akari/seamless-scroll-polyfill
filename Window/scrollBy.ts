@@ -5,8 +5,8 @@ import {
     isScrollBehaviorSupported,
     nonFinite,
     original,
-} from "./common.js";
-import { windowScroll } from "./Window.scroll.js";
+} from "../.internal/common.js";
+import { windowScroll } from "./scroll.js";
 
 export const windowScrollBy = (options: IScrollToOptions): void => {
     const left = nonFinite(options.left || 0) + (window.scrollX || window.pageXOffset);

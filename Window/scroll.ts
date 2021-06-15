@@ -8,7 +8,7 @@ import {
     now,
     original,
     step,
-} from "./common.js";
+} from "../.internal/common.js";
 
 export const windowScroll = (options: IScrollToOptions): void => {
     const originalBoundFunc = original.windowScroll.bind(window);
