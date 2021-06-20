@@ -1,8 +1,13 @@
-import { IContext, IScrollConfig, now, step } from "../.internal/common.js";
+import type { IContext, IScrollConfig } from "../.internal/common.js";
+import { now, step } from "../.internal/common.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { nonFinite } from "../.internal/non-finite";
 
-export const elementScrollWithOptions = (element: Element, options: ScrollToOptions, config?: IScrollConfig): void => {
+export const elementScrollWithOptions = (
+    element: Element,
+    options: Readonly<ScrollToOptions>,
+    config?: IScrollConfig,
+): void => {
     if (!element.isConnected) {
         return;
     }
@@ -21,7 +26,8 @@ export const elementScrollWithOptions = (element: Element, options: ScrollToOpti
     }
 
     if (options.behavior !== "smooth") {
-        return originalBoundFunc(targetX, targetY);
+        originalBoundFunc(targetX, targetY);
+        return;
     }
 
     const removeEventListener = () => {

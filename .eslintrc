@@ -1,0 +1,14 @@
+{
+    "root": true,
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "extends": ["akari", "akari/typescript"],
+    "rules": {
+        "default-case": "off",
+        "prefer-rest-params": "off",
+        "@typescript-eslint/no-unsafe-assignment": "warn",
+        "@typescript-eslint/no-unnecessary-condition": "off",
+        "@typescript-eslint/switch-exhaustiveness-check": "off"
+    }
+}

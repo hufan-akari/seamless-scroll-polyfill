@@ -1,9 +1,10 @@
-import { checkBehavior } from "../.internal/check-behavior.js";
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
-import { modifyPrototypes } from "../.internal/modify-prototypes";
 import { elementScrollXY } from "../.internal/Element.scroll.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { isObject } from "../.internal/is-object.js";
+import { modifyPrototypes } from "../.internal/modify-prototypes";
 import { elementScrollWithOptions } from "./scrollWithOptions.js";
 
 export const elementScrollTo = (element: Element, scrollToOptions?: ScrollToOptions, config?: IScrollConfig): void => {
@@ -14,7 +15,7 @@ export const elementScrollTo = (element: Element, scrollToOptions?: ScrollToOpti
 
     if (!checkBehavior(options.behavior)) {
         throw new TypeError(
-            `Failed to execute 'scrollTo' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+            `Failed to execute 'scrollTo' on 'Element': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
         );
     }
 

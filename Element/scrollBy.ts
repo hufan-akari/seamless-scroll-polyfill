@@ -1,5 +1,6 @@
 import { checkBehavior } from "../.internal/check-behavior.js";
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import { isObject } from "../.internal/is-object.js";
 import { modifyPrototypes } from "../.internal/modify-prototypes";
 import { nonFinite } from "../.internal/non-finite";
@@ -13,7 +14,7 @@ export const elementScrollBy = (element: Element, scrollByOptions?: ScrollToOpti
 
     if (!checkBehavior(options.behavior)) {
         throw new TypeError(
-            `Failed to execute 'scrollBy' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+            `Failed to execute 'scrollBy' on 'Element': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
         );
     }
 

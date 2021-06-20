@@ -1,8 +1,10 @@
+/* eslint-disable no-bitwise */
 import { checkBehavior } from "../.internal/check-behavior.js";
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
-import { modifyPrototypes } from "../.internal/modify-prototypes";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { isObject } from "../.internal/is-object";
+import { modifyPrototypes } from "../.internal/modify-prototypes";
 import { elementScroll } from "./scroll.js";
 
 const enum ScrollAlignment {
@@ -53,7 +55,7 @@ type Tuple2<T> = [T, T];
 
 // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/dom/element.cc;l=1097-1189;drc=6a7533d4a1e9f2372223a9d912a9e53a6fa35ae0
 const toPhysicalAlignment = (
-    options: ScrollIntoViewOptions,
+    options: Readonly<ScrollIntoViewOptions>,
     writingMode: WritingMode,
     isLTR: boolean,
 ): Tuple2<ScrollAlignment> => {
@@ -303,7 +305,7 @@ const getFrameElement = (element: Element): Element | null => {
 
     try {
         return element.ownerDocument.defaultView.frameElement;
-    } catch (e) {
+    } catch {
         return null;
     }
 };
@@ -317,7 +319,7 @@ const isHiddenByFrame = (element: Element): boolean => {
     return frame.clientHeight < element.scrollHeight || frame.clientWidth < element.scrollWidth;
 };
 
-const isScrollable = (element: Element, computedStyle: CSSStyleDeclaration): boolean => {
+const isScrollable = (element: Element, computedStyle: Readonly<CSSStyleDeclaration>): boolean => {
     if (element.clientHeight < element.scrollHeight || element.clientWidth < element.scrollWidth) {
         return canOverflow(computedStyle.overflowY) || canOverflow(computedStyle.overflowX) || isHiddenByFrame(element);
     }
@@ -354,7 +356,7 @@ const getSupportedScrollMarginProperty = (): string => {
     return ["scroll-margin", "scroll-snap-margin"].filter(isCSSPropertySupported)[0];
 };
 
-const getElementScrollSnapArea = (element: Element, computedStyle: CSSStyleDeclaration) => {
+const getElementScrollSnapArea = (element: Element, computedStyle: Readonly<CSSStyleDeclaration>) => {
     const { top, right, bottom, left } = element.getBoundingClientRect();
     const [scrollMarginTop, scrollMarginRight, scrollMarginBottom, scrollMarginLeft] = [
         "top",
@@ -379,7 +381,7 @@ export const elementScrollIntoView = (
 
     if (!checkBehavior(options.behavior)) {
         throw new TypeError(
-            `Failed to execute 'scrollIntoView' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+            `Failed to execute 'scrollIntoView' on 'Element': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
         );
     }
 
@@ -663,13 +665,14 @@ export const elementScrollIntoViewPolyfill = (config?: IScrollConfig): void => {
 
     modifyPrototypes((prototype) => {
         prototype.scrollIntoView = function scrollIntoView(): void {
-            const options = arguments[0];
+            const options = arguments[0] as unknown;
 
             if (arguments.length === 1 && isObject(options)) {
-                return elementScrollIntoView(this, options, config);
+                elementScrollIntoView(this, options as ScrollIntoViewOptions, config);
+                return;
             }
 
-            return originalFunc.apply(this, arguments as any);
+            originalFunc.apply(this, arguments as any);
         };
     });
 };

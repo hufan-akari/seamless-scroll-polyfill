@@ -1,7 +1,8 @@
 import { checkBehavior } from "../.internal/check-behavior.js";
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
-import { nonFinite } from "../.internal/non-finite";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import { isObject } from "../.internal/is-object";
+import { nonFinite } from "../.internal/non-finite";
 import { windowScroll } from "./scroll.js";
 
 export const windowScrollBy = (scrollByOptions?: ScrollToOptions, config?: IScrollConfig): void => {
@@ -13,14 +14,14 @@ export const windowScrollBy = (scrollByOptions?: ScrollToOptions, config?: IScro
 
     if (!checkBehavior(options.behavior)) {
         throw new TypeError(
-            `Failed to execute 'scrollBy' on 'Window': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+            `Failed to execute 'scrollBy' on 'Window': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
         );
     }
 
     const left = nonFinite(options.left) + (window.scrollX || window.pageXOffset);
     const top = nonFinite(options.top) + (window.scrollY || window.pageYOffset);
 
-    return windowScroll({ ...options, left, top }, config);
+    windowScroll({ ...options, left, top }, config);
 };
 
 export const windowScrollByPolyfill = (config?: IScrollConfig): void => {

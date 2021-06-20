@@ -1,5 +1,6 @@
 import { checkBehavior } from "../.internal/check-behavior.js";
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { isObject } from "../.internal/is-object";
 import { windowScrollWithOptions } from "./scrollWithOptions.js";
@@ -14,7 +15,7 @@ export const windowScrollTo = (scrollOptions: ScrollToOptions, config?: IScrollC
 
     if (!checkBehavior(options.behavior)) {
         throw new TypeError(
-            `Failed to execute 'scrollTo' on 'Window': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+            `Failed to execute 'scrollTo' on 'Window': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
         );
     }
 

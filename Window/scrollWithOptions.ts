@@ -1,10 +1,11 @@
-import { IContext, IScrollConfig, now, step } from "../.internal/common.js";
+import type { IContext, IScrollConfig } from "../.internal/common.js";
+import { now, step } from "../.internal/common.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { nonFinite } from "../.internal/non-finite";
 
 export const windowScrollWithOptions = (
     window: Window & typeof globalThis,
-    options: ScrollToOptions,
+    options: Readonly<ScrollToOptions>,
     config?: IScrollConfig,
 ): void => {
     const originalBoundFunc = getOriginalMethod(window, "scroll").bind(window);
@@ -20,7 +21,8 @@ export const windowScrollWithOptions = (
     }
 
     if (options.behavior !== "smooth") {
-        return originalBoundFunc(targetX, targetY);
+        originalBoundFunc(targetX, targetY);
+        return;
     }
 
     const removeEventListener = () => {

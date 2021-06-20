@@ -1,4 +1,5 @@
-import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import type { IScrollConfig } from "../.internal/common.js";
+import { isScrollBehaviorSupported } from "../.internal/common.js";
 import {
     elementScrollByPolyfill,
     elementScrollIntoViewPolyfill,
