@@ -1,90 +1,43 @@
-import {
-    IAnimationOptions,
-    IContext,
-    IScrollToOptions,
-    isObject,
-    isScrollBehaviorSupported,
-    modifyPrototypes,
-    nonFinite,
-    now,
-    original,
-    step,
-} from "../.internal/common.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { elementScrollXY } from "../.internal/Element.scroll";
+import { getOriginalMethod } from "../.internal/get-original-method";
+import { isObject } from "../.internal/is-object.js";
+import { modifyPrototypes } from "../.internal/modify-prototypes";
+import { elementScrollWithOptions } from "./scrollWithOptions.js";
 
-export const elementScroll = (element: Element, options: IScrollToOptions): void => {
-    const originalBoundFunc = original.elementScroll.bind(element);
-
-    if (options.left === undefined && options.top === undefined) {
-        return;
+export const elementScroll = (element: Element, scrollOptions?: ScrollToOptions, config?: IScrollConfig): void => {
+    const options = scrollOptions ?? {};
+    if (!isObject(options)) {
+        throw new TypeError("Failed to execute 'scroll' on 'Element': cannot convert to dictionary.");
     }
 
-    const startX = element.scrollLeft;
-    const startY = element.scrollTop;
-
-    const targetX = nonFinite(options.left ?? startX);
-    const targetY = nonFinite(options.top ?? startY);
-
-    if (options.behavior !== "smooth") {
-        return originalBoundFunc(targetX, targetY);
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scroll' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
     }
 
-    const removeEventListener = () => {
-        window.removeEventListener("wheel", cancelScroll);
-        window.removeEventListener("touchmove", cancelScroll);
-    };
-
-    const context: IContext = {
-        timeStamp: now(),
-        duration: options.duration,
-        startX,
-        startY,
-        targetX,
-        targetY,
-        rafId: 0,
-        method: originalBoundFunc,
-        timingFunc: options.timingFunc,
-        callback: removeEventListener,
-    };
-
-    const cancelScroll = () => {
-        cancelAnimationFrame(context.rafId);
-        removeEventListener();
-    };
-
-    window.addEventListener("wheel", cancelScroll, {
-        passive: true,
-        once: true,
-    });
-    window.addEventListener("touchmove", cancelScroll, {
-        passive: true,
-        once: true,
-    });
-
-    step(context);
+    elementScrollWithOptions(element, options, config);
 };
 
-export const elementScrollPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+export const elementScrollPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    const originalFunc = original.elementScroll;
+    const originalFunc = getOriginalMethod(win.HTMLElement.prototype, "scroll") || elementScrollXY;
 
-    modifyPrototypes(
-        (prototype) =>
-            (prototype.scroll = function scroll() {
-                if (arguments.length === 1) {
-                    const scrollOptions = arguments[0];
-                    if (!isObject(scrollOptions)) {
-                        throw new TypeError(
-                            "Failed to execute 'scroll' on 'Element': parameter 1 ('options') is not an object.",
-                        );
-                    }
+    modifyPrototypes((prototype) => {
+        prototype.scroll = function scroll() {
+            if (arguments.length === 1) {
+                elementScroll(this, arguments[0], config);
+                return;
+            }
 
-                    return elementScroll(this, { ...scrollOptions, ...animationOptions });
-                }
-
-                return originalFunc.apply(this, arguments as any);
-            }),
-    );
+            originalFunc.apply(this, arguments as any);
+        };
+    });
 };

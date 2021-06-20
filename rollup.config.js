@@ -9,6 +9,7 @@ const rollupOptions = {
         tsconfigOverride: {
             compilerOptions: {
                 target: "es5",
+                importHelpers: true,
             },
         },
     }),

@@ -1,23 +1,23 @@
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
 import {
     elementScrollByPolyfill,
     elementScrollIntoViewPolyfill,
     elementScrollPolyfill,
     elementScrollToPolyfill,
 } from "../Element/index.js";
-import { IAnimationOptions, isScrollBehaviorSupported } from "../.internal/common.js";
 import { windowScrollByPolyfill, windowScrollPolyfill, windowScrollToPolyfill } from "../Window/index.js";
 
-export const polyfill = (options?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+export const polyfill = (config?: IScrollConfig): void => {
+    if (isScrollBehaviorSupported(config?.window || window)) {
         return;
     }
 
-    elementScrollPolyfill(options);
-    elementScrollToPolyfill(options);
-    elementScrollByPolyfill(options);
-    elementScrollIntoViewPolyfill(options);
+    elementScrollPolyfill(config);
+    elementScrollToPolyfill(config);
+    elementScrollByPolyfill(config);
+    elementScrollIntoViewPolyfill(config);
 
-    windowScrollPolyfill(options);
-    windowScrollToPolyfill(options);
-    windowScrollByPolyfill(options);
+    windowScrollPolyfill(config);
+    windowScrollToPolyfill(config);
+    windowScrollByPolyfill(config);
 };

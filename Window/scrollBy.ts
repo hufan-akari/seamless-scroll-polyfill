@@ -1,44 +1,41 @@
-import {
-    IAnimationOptions,
-    IScrollToOptions,
-    isObject,
-    isScrollBehaviorSupported,
-    nonFinite,
-    original,
-} from "../.internal/common.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { nonFinite } from "../.internal/non-finite";
+import { isObject } from "../.internal/is-object";
 import { windowScroll } from "./scroll.js";
 
-export const windowScrollBy = (options: IScrollToOptions): void => {
-    const left = nonFinite(options.left || 0) + (window.scrollX || window.pageXOffset);
-    const top = nonFinite(options.top || 0) + (window.scrollY || window.pageYOffset);
+export const windowScrollBy = (scrollByOptions?: ScrollToOptions, config?: IScrollConfig): void => {
+    const options = scrollByOptions ?? {};
 
-    if (options.behavior !== "smooth") {
-        return original.windowScroll.call(window, left, top);
+    if (!isObject(options)) {
+        throw new TypeError("Failed to execute 'scrollBy' on 'Window': cannot convert to dictionary.");
     }
 
-    return windowScroll({ ...options, left, top });
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scrollBy' on 'Window': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
+    }
+
+    const left = nonFinite(options.left) + (window.scrollX || window.pageXOffset);
+    const top = nonFinite(options.top) + (window.scrollY || window.pageYOffset);
+
+    return windowScroll({ ...options, left, top }, config);
 };
 
-export const windowScrollByPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+export const windowScrollByPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    window.scrollBy = function scrollBy() {
+    win.scrollBy = function scrollBy() {
         if (arguments.length === 1) {
-            const scrollByOptions = arguments[0];
-            if (!isObject(scrollByOptions)) {
-                throw new TypeError(
-                    "Failed to execute 'scrollBy' on 'Window': parameter 1 ('options') is not an object.",
-                );
-            }
-
-            return windowScrollBy({ ...scrollByOptions, ...animationOptions });
+            windowScrollBy(arguments[0], config);
+            return;
         }
 
-        const left = Number(arguments[0]);
-        const top = Number(arguments[1]);
-
-        return windowScrollBy({ left, top });
+        windowScrollBy({ left: arguments[0], top: arguments[1] }, config);
     };
 };

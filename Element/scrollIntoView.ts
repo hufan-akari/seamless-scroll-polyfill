@@ -1,11 +1,8 @@
-import {
-    IAnimationOptions,
-    IScrollIntoViewOptions,
-    isObject,
-    isScrollBehaviorSupported,
-    modifyPrototypes,
-    original,
-} from "../.internal/common.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { modifyPrototypes } from "../.internal/modify-prototypes";
+import { getOriginalMethod } from "../.internal/get-original-method.js";
+import { isObject } from "../.internal/is-object";
 import { elementScroll } from "./scroll.js";
 
 const enum ScrollAlignment {
@@ -373,7 +370,19 @@ const getElementScrollSnapArea = (element: Element, computedStyle: CSSStyleDecla
     return [top - scrollMarginTop, right + scrollMarginRight, bottom + scrollMarginBottom, left - scrollMarginLeft];
 };
 
-export const elementScrollIntoView = (element: Element, options: IScrollIntoViewOptions): void => {
+export const elementScrollIntoView = (
+    element: Element,
+    scrollIntoViewOptions?: ScrollIntoViewOptions,
+    config?: IScrollConfig,
+): void => {
+    const options = scrollIntoViewOptions || {};
+
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scrollIntoView' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
+    }
+
     if (element.isConnected === false) {
         return;
     }
@@ -633,29 +642,34 @@ export const elementScrollIntoView = (element: Element, options: IScrollIntoView
             targetInline += scrollLeft - inlineScroll;
         }
 
-        actions.push(() => elementScroll(frame, { ...options, top: blockScroll, left: inlineScroll }));
+        actions.push(() => {
+            elementScroll(frame, { ...options, top: blockScroll, left: inlineScroll }, config);
+        });
     });
 
-    actions.forEach((run) => run());
+    actions.forEach((run) => {
+        run();
+    });
 };
 
-export const elementScrollIntoViewPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+export const elementScrollIntoViewPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    const originalFunc = original.elementScrollIntoView;
+    const originalFunc = getOriginalMethod(win.HTMLElement.prototype, "scrollIntoView");
 
-    modifyPrototypes(
-        (prototype) =>
-            (prototype.scrollIntoView = function scrollIntoView(): void {
-                const scrollIntoViewOptions = arguments[0];
+    modifyPrototypes((prototype) => {
+        prototype.scrollIntoView = function scrollIntoView(): void {
+            const options = arguments[0];
 
-                if (arguments.length === 1 && isObject(scrollIntoViewOptions)) {
-                    return elementScrollIntoView(this, { ...scrollIntoViewOptions, ...animationOptions });
-                }
+            if (arguments.length === 1 && isObject(options)) {
+                return elementScrollIntoView(this, options, config);
+            }
 
-                return originalFunc.apply(this, arguments as any);
-            }),
-    );
+            return originalFunc.apply(this, arguments as any);
+        };
+    });
 };

@@ -1,33 +1,46 @@
-import { IAnimationOptions, isObject, isScrollBehaviorSupported, modifyPrototypes, original } from "../.internal/common.js";
-import { elementScroll } from "./scroll.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { modifyPrototypes } from "../.internal/modify-prototypes";
+import { elementScrollXY } from "../.internal/Element.scroll.js";
+import { getOriginalMethod } from "../.internal/get-original-method.js";
+import { isObject } from "../.internal/is-object.js";
+import { elementScrollWithOptions } from "./scrollWithOptions.js";
 
-export { elementScroll as elementScrollTo } from "./scroll.js";
+export const elementScrollTo = (element: Element, scrollToOptions?: ScrollToOptions, config?: IScrollConfig): void => {
+    const options = scrollToOptions ?? {};
+    if (!isObject(options)) {
+        throw new TypeError("Failed to execute 'scrollTo' on 'Element': cannot convert to dictionary.");
+    }
 
-export const elementScrollToPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scrollTo' on 'Element': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
+    }
+
+    elementScrollWithOptions(element, options, config);
+};
+
+export const elementScrollToPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    const originalFunc = original.elementScroll;
+    const originalFunc =
+        getOriginalMethod(win.HTMLElement.prototype, "scrollTo") ||
+        getOriginalMethod(win.HTMLElement.prototype, "scroll") ||
+        elementScrollXY;
 
-    modifyPrototypes(
-        (prototype) =>
-            (prototype.scrollTo = function scrollTo() {
-                if (arguments.length === 1) {
-                    const scrollToOptions = arguments[0];
-                    if (!isObject(scrollToOptions)) {
-                        throw new TypeError(
-                            "Failed to execute 'scrollTo' on 'Element': parameter 1 ('options') is not an object.",
-                        );
-                    }
+    modifyPrototypes((prototype) => {
+        prototype.scrollTo = function scrollTo() {
+            if (arguments.length === 1) {
+                elementScrollTo(this, arguments[0], config);
+                return;
+            }
 
-                    const left = Number(scrollToOptions.left);
-                    const top = Number(scrollToOptions.top);
-
-                    return elementScroll(this, { ...scrollToOptions, left, top, ...animationOptions });
-                }
-
-                return originalFunc.apply(this, arguments as any);
-            }),
-    );
+            originalFunc.apply(this, arguments as any);
+        };
+    });
 };

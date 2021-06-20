@@ -1,86 +1,41 @@
-import {
-    IAnimationOptions,
-    IContext,
-    IScrollToOptions,
-    isObject,
-    isScrollBehaviorSupported,
-    nonFinite,
-    now,
-    original,
-    step,
-} from "../.internal/common.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { getOriginalMethod } from "../.internal/get-original-method.js";
+import { isObject } from "../.internal/is-object";
+import { windowScrollWithOptions } from "./scrollWithOptions.js";
 
-export const windowScroll = (options: IScrollToOptions): void => {
-    const originalBoundFunc = original.windowScroll.bind(window);
+export const windowScroll = (scrollOptions: ScrollToOptions, config?: IScrollConfig): void => {
+    const options = scrollOptions ?? {};
+    const win = config?.window || window;
 
-    if (options.left === undefined && options.top === undefined) {
-        return;
+    if (!isObject(options)) {
+        throw new TypeError("Failed to execute 'scroll' on 'Window': cannot convert to dictionary.");
     }
 
-    const startX = window.scrollX || window.pageXOffset;
-    const startY = window.scrollY || window.pageYOffset;
-
-    const targetX = nonFinite(options.left ?? startX);
-    const targetY = nonFinite(options.top ?? startY);
-
-    if (options.behavior !== "smooth") {
-        return originalBoundFunc(targetX, targetY);
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scroll' on 'Window': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
     }
 
-    const removeEventListener = () => {
-        window.removeEventListener("wheel", cancelScroll);
-        window.removeEventListener("touchmove", cancelScroll);
-    };
-
-    const context: IContext = {
-        timeStamp: now(),
-        duration: options.duration,
-        startX,
-        startY,
-        targetX,
-        targetY,
-        rafId: 0,
-        method: originalBoundFunc,
-        timingFunc: options.timingFunc,
-        callback: removeEventListener,
-    };
-
-    const cancelScroll = () => {
-        cancelAnimationFrame(context.rafId);
-        removeEventListener();
-    };
-
-    window.addEventListener("wheel", cancelScroll, {
-        passive: true,
-        once: true,
-    });
-    window.addEventListener("touchmove", cancelScroll, {
-        passive: true,
-        once: true,
-    });
-
-    step(context);
+    windowScrollWithOptions(win, options, config);
 };
 
-export const windowScrollPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+export const windowScrollPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    const originalFunc = original.windowScroll;
+    const originalFunc = getOriginalMethod(win, "scroll");
 
-    window.scroll = function scroll() {
+    win.scroll = function scroll() {
         if (arguments.length === 1) {
-            const scrollOptions = arguments[0];
-            if (!isObject(scrollOptions)) {
-                throw new TypeError(
-                    "Failed to execute 'scroll' on 'Window': parameter 1 ('options') is not an object.",
-                );
-            }
-
-            return windowScroll({ ...scrollOptions, ...animationOptions });
+            windowScroll(arguments[0], config);
+            return;
         }
 
-        return originalFunc.apply(this, arguments as any);
+        originalFunc.apply(this, arguments as any);
     };
 };

@@ -1,30 +1,41 @@
-import { IAnimationOptions, isObject, isScrollBehaviorSupported, original } from "../.internal/common.js";
-import { windowScroll } from "./scroll.js";
+import { checkBehavior } from "../.internal/check-behavior.js";
+import { IScrollConfig, isScrollBehaviorSupported } from "../.internal/common.js";
+import { getOriginalMethod } from "../.internal/get-original-method.js";
+import { isObject } from "../.internal/is-object";
+import { windowScrollWithOptions } from "./scrollWithOptions.js";
 
-export { windowScroll as windowScrollTo } from "./scroll.js";
+export const windowScrollTo = (scrollOptions: ScrollToOptions, config?: IScrollConfig): void => {
+    const options = scrollOptions ?? {};
+    const win = config?.window || window;
 
-export const windowScrollToPolyfill = (animationOptions?: IAnimationOptions): void => {
-    if (isScrollBehaviorSupported()) {
+    if (!isObject(options)) {
+        throw new TypeError("Failed to execute 'scrollTo' on 'Window': cannot convert to dictionary.");
+    }
+
+    if (!checkBehavior(options.behavior)) {
+        throw new TypeError(
+            `Failed to execute 'scrollTo' on 'Window': The provided value '${options.behavior}' is not a valid enum value of type ScrollBehavior.`,
+        );
+    }
+
+    windowScrollWithOptions(win, options, config);
+};
+
+export const windowScrollToPolyfill = (config?: IScrollConfig): void => {
+    const win = config?.window || window;
+
+    if (isScrollBehaviorSupported(win)) {
         return;
     }
 
-    const originalFunc = original.windowScroll;
+    const originalFunc = getOriginalMethod(win, "scrollTo") || getOriginalMethod(win, "scroll");
 
-    window.scrollTo = function scrollTo() {
+    win.scrollTo = function scrollTo() {
         if (arguments.length === 1) {
-            const scrollToOptions = arguments[0];
-            if (!isObject(scrollToOptions)) {
-                throw new TypeError(
-                    "Failed to execute 'scrollTo' on 'Window': parameter 1 ('options') is not an object.",
-                );
-            }
-
-            const left = Number(scrollToOptions.left);
-            const top = Number(scrollToOptions.top);
-
-            return windowScroll({ ...scrollToOptions, left, top, ...animationOptions });
+            windowScrollTo(arguments[0], config);
+            return;
         }
 
-        return originalFunc.apply(this, arguments as any);
+        originalFunc.apply(this, arguments as any);
     };
 };

@@ -1,51 +1,13 @@
-const ease = (k: number) => {
-    return 0.5 * (1 - Math.cos(Math.PI * k));
-};
+export const isScrollBehaviorSupported = (window: Window & typeof globalThis): boolean =>
+    "scrollBehavior" in window.document.documentElement.style;
 
-const DURATION = 500;
-
-export const isScrollBehaviorSupported = (): boolean => "scrollBehavior" in document.documentElement.style;
-
-export const original = {
-    _elementScroll: undefined as typeof Element.prototype.scroll | undefined,
-    get elementScroll() {
-        return (this._elementScroll ||=
-            HTMLElement.prototype.scroll ||
-            HTMLElement.prototype.scrollTo ||
-            function (this: Element, x: number, y: number) {
-                this.scrollLeft = x;
-                this.scrollTop = y;
-            });
-    },
-
-    _elementScrollIntoView: undefined as typeof Element.prototype.scrollIntoView | undefined,
-    get elementScrollIntoView() {
-        return (this._elementScrollIntoView ||= HTMLElement.prototype.scrollIntoView);
-    },
-
-    _windowScroll: undefined as typeof window.scroll | undefined,
-    get windowScroll() {
-        return (this._windowScroll ||= window.scroll || window.scrollTo);
-    },
-};
-
-type Prototype = typeof HTMLElement.prototype | typeof SVGElement.prototype | typeof Element.prototype;
-
-export const modifyPrototypes = (modification: (prototype: Prototype) => void): void => {
-    const prototypes = [HTMLElement.prototype, SVGElement.prototype, Element.prototype];
-    prototypes.forEach((prototype) => modification(prototype));
-};
-
-export interface IAnimationOptions {
+export interface IScrollConfig {
     duration?: number;
     timingFunc?: (k: number) => number;
+    window?: Window & typeof globalThis;
 }
 
-export interface IScrollToOptions extends ScrollToOptions, IAnimationOptions {}
-
-export interface IScrollIntoViewOptions extends ScrollIntoViewOptions, IAnimationOptions {}
-
-export interface IContext extends IAnimationOptions {
+export interface IContext extends IScrollConfig {
     timeStamp: number;
     startX: number;
     startY: number;
@@ -56,10 +18,17 @@ export interface IContext extends IAnimationOptions {
     callback: () => void;
 }
 
-export const now = (): number => window.performance?.now?.() ?? Date.now();
+const ease = (k: number) => {
+    return 0.5 * (1 - Math.cos(Math.PI * k));
+};
 
-export const step = (context: IContext): void => {
-    const currentTime = now();
+export const now = (window: Window & typeof globalThis): number => window.performance?.now?.() ?? Date.now();
+
+const DURATION = 500;
+
+export const step = (context: IContext, config?: IScrollConfig): void => {
+    const win = config?.window || window;
+    const currentTime = now(win);
 
     const elapsed = (currentTime - context.timeStamp) / (context.duration || DURATION);
     if (elapsed > 1) {
@@ -74,20 +43,7 @@ export const step = (context: IContext): void => {
 
     context.method(currentX, currentY);
 
-    context.rafId = requestAnimationFrame(() => {
-        step(context);
+    context.rafId = win.requestAnimationFrame(() => {
+        step(context, config);
     });
-};
-
-// https://drafts.csswg.org/cssom-view/#normalize-non-finite-values
-export const nonFinite = (value: number): number => {
-    if (!isFinite(value)) {
-        return 0;
-    }
-    return Number(value);
-};
-
-export const isObject = (value: unknown): value is Record<string, unknown> => {
-    const type = typeof value;
-    return value !== null && (type === "object" || type === "function");
 };
