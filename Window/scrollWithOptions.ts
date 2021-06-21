@@ -31,15 +31,14 @@ export const windowScrollWithOptions = (
     };
 
     const context: IContext = {
+        ...config,
         timeStamp: now(window),
-        duration: config?.duration,
         startX,
         startY,
         targetX,
         targetY,
         rafId: 0,
         method: originalBoundFunc,
-        timingFunc: config?.timingFunc,
         callback: removeEventListener,
     };
 

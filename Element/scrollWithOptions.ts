@@ -36,15 +36,14 @@ export const elementScrollWithOptions = (
     };
 
     const context: IContext = {
+        ...config,
         timeStamp: now(win),
-        duration: config?.duration,
         startX,
         startY,
         targetX,
         targetY,
         rafId: 0,
         method: originalBoundFunc,
-        timingFunc: config?.timingFunc,
         callback: removeEventListener,
     };
 
@@ -53,11 +52,11 @@ export const elementScrollWithOptions = (
         removeEventListener();
     };
 
-    window.addEventListener("wheel", cancelScroll, {
+    win.addEventListener("wheel", cancelScroll, {
         passive: true,
         once: true,
     });
-    window.addEventListener("touchmove", cancelScroll, {
+    win.addEventListener("touchmove", cancelScroll, {
         passive: true,
         once: true,
     });

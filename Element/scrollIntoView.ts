@@ -2,6 +2,7 @@
 import { checkBehavior } from "../.internal/check-behavior.js";
 import type { IScrollConfig } from "../.internal/common.js";
 import { isScrollBehaviorSupported } from "../.internal/common.js";
+import { invalidBehaviorEnumValue } from "../.internal/error-message.js";
 import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { isObject } from "../.internal/is-object";
 import { modifyPrototypes } from "../.internal/modify-prototypes";
@@ -380,26 +381,23 @@ export const elementScrollIntoView = (
     const options = scrollIntoViewOptions || {};
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(
-            `Failed to execute 'scrollIntoView' on 'Element': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
-        );
+        throw new TypeError(invalidBehaviorEnumValue("scrollIntoView", "Element", options.behavior!));
     }
 
-    if (element.isConnected === false) {
-        return;
-    }
+    const win = config?.window || window;
+    const doc = win.document;
 
     // On Chrome and Firefox, document.scrollingElement will return the <html> element.
     // Safari, document.scrollingElement will return the <body> element.
     // On Edge, document.scrollingElement will return the <body> element.
     // IE11 does not support document.scrollingElement, but you can assume its <html>.
     // Used to handle the top most element that can be scrolled
-    const scrollingElement = document.scrollingElement || document.documentElement;
+    const scrollingElement = doc.scrollingElement || doc.documentElement;
 
     // Collect all the scrolling boxes, as defined in the spec: https://drafts.csswg.org/cssom-view/#scrolling-box
     const frames: Element[] = [];
 
-    const documentElementStyle = getComputedStyle(document.documentElement);
+    const documentElementStyle = win.getComputedStyle(document.documentElement);
 
     for (let cursor = parentElement(element); cursor !== null; cursor = parentElement(cursor)) {
         // Stop when we reach the viewport
@@ -408,13 +406,13 @@ export const elementScrollIntoView = (
             break;
         }
 
-        const cursorStyle = getComputedStyle(cursor);
+        const cursorStyle = win.getComputedStyle(cursor);
 
         // Skip document.body if it's not the scrollingElement and documentElement isn't independently scrollable
         if (
-            cursor === document.body &&
+            cursor === doc.body &&
             isScrollable(cursor, cursorStyle) &&
-            !isScrollable(document.documentElement, documentElementStyle)
+            !isScrollable(doc.documentElement, documentElementStyle)
         ) {
             continue;
         }
@@ -436,14 +434,14 @@ export const elementScrollIntoView = (
     // and viewport dimensions on window.innerWidth/Height
     // https://www.quirksmode.org/mobile/viewports2.html
     // https://bokand.github.io/viewport/index.html
-    const viewportWidth = window.visualViewport ? window.visualViewport.width : innerWidth;
-    const viewportHeight = window.visualViewport ? window.visualViewport.height : innerHeight;
+    const viewportWidth = win.visualViewport ? win.visualViewport.width : innerWidth;
+    const viewportHeight = win.visualViewport ? win.visualViewport.height : innerHeight;
 
     // Newer browsers supports scroll[X|Y], page[X|Y]Offset is
-    const viewportX = window.scrollX || window.pageXOffset;
-    const viewportY = window.scrollY || window.pageYOffset;
+    const viewportX = win.scrollX || win.pageXOffset;
+    const viewportY = win.scrollY || win.pageYOffset;
 
-    const computedStyle = getComputedStyle(element);
+    const computedStyle = win.getComputedStyle(element);
 
     const [targetTop, targetRight, targetBottom, targetLeft] = getElementScrollSnapArea(element, computedStyle);
     const targetHeight = targetBottom - targetTop;
@@ -493,7 +491,7 @@ export const elementScrollIntoView = (
     frames.forEach((frame) => {
         const { height, width, top, right, bottom, left } = frame.getBoundingClientRect();
 
-        const frameStyle = getComputedStyle(frame);
+        const frameStyle = win.getComputedStyle(frame);
         const borderLeft = parseInt(frameStyle.borderLeftWidth, 10);
         const borderTop = parseInt(frameStyle.borderTopWidth, 10);
         const borderRight = parseInt(frameStyle.borderRightWidth, 10);
@@ -665,14 +663,15 @@ export const elementScrollIntoViewPolyfill = (config?: IScrollConfig): void => {
 
     modifyPrototypes((prototype) => {
         prototype.scrollIntoView = function scrollIntoView(): void {
-            const options = arguments[0] as unknown;
+            const args = arguments;
+            const options = args[0] as unknown;
 
-            if (arguments.length === 1 && isObject(options)) {
+            if (args.length === 1 && isObject(options)) {
                 elementScrollIntoView(this, options as ScrollIntoViewOptions, config);
                 return;
             }
 
-            originalFunc.apply(this, arguments as any);
+            originalFunc.apply(this, args as any);
         };
     });
 };

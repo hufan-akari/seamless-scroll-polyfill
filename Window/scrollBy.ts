@@ -1,6 +1,7 @@
 import { checkBehavior } from "../.internal/check-behavior.js";
 import type { IScrollConfig } from "../.internal/common.js";
 import { isScrollBehaviorSupported } from "../.internal/common.js";
+import { failedExecute, invalidBehaviorEnumValue } from "../.internal/error-message.js";
 import { isObject } from "../.internal/is-object";
 import { nonFinite } from "../.internal/non-finite";
 import { windowScroll } from "./scroll.js";
@@ -9,13 +10,11 @@ export const windowScrollBy = (scrollByOptions?: ScrollToOptions, config?: IScro
     const options = scrollByOptions ?? {};
 
     if (!isObject(options)) {
-        throw new TypeError("Failed to execute 'scrollBy' on 'Window': cannot convert to dictionary.");
+        throw new TypeError(failedExecute("scrollBy", "Window"));
     }
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(
-            `Failed to execute 'scrollBy' on 'Window': The provided value '${options.behavior!}' is not a valid enum value of type ScrollBehavior.`,
-        );
+        throw new TypeError(invalidBehaviorEnumValue("scrollBy", "Window", options.behavior!));
     }
 
     const left = nonFinite(options.left) + (window.scrollX || window.pageXOffset);
@@ -32,11 +31,12 @@ export const windowScrollByPolyfill = (config?: IScrollConfig): void => {
     }
 
     win.scrollBy = function scrollBy() {
-        if (arguments.length === 1) {
-            windowScrollBy(arguments[0], config);
+        const args = arguments;
+        if (args.length === 1) {
+            windowScrollBy(args[0], config);
             return;
         }
 
-        windowScrollBy({ left: arguments[0], top: arguments[1] }, config);
+        windowScrollBy({ left: args[0], top: args[1] }, config);
     };
 };
