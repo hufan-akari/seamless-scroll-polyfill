@@ -6,7 +6,7 @@ import { getOriginalMethod } from "../.internal/get-original-method.js";
 import { isObject } from "../.internal/is-object";
 import { windowScrollWithOptions } from "./scrollWithOptions.js";
 
-export const windowScroll = (scrollOptions: ScrollToOptions, config?: IScrollConfig): void => {
+export const windowScroll = (scrollOptions?: ScrollToOptions, config?: IScrollConfig): void => {
     const options = scrollOptions ?? {};
     const win = config?.window || window;
 
