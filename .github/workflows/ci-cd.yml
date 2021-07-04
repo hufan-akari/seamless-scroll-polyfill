@@ -10,12 +10,12 @@ jobs:
             - uses: actions/setup-node@v1
               with:
                   node-version: 14
-            - uses: pnpm/action-setup@v1.2.1
+            - uses: pnpm/action-setup@v2.0.1
               with:
-                  version: 5.18.9
+                  version: 6.0.2
                   run_install: true
-            - run: pnpm run listdiff
-            # - run: pnpm run lint
+            - run: pnpm run prettier
+            - run: pnpm run lint
             - run: pnpm run esm
             - run: pnpm run rollup
 
@@ -29,9 +29,9 @@ jobs:
               with:
                   node-version: 14
                   registry-url: https://registry.npmjs.org/
-            - uses: pnpm/action-setup@v1.2.1
+            - uses: pnpm/action-setup@v2.0.1
               with:
-                  version: 5.18.9
+                  version: 6.0.2
                   run_install: true
             - run: pnpm run esm
             - run: pnpm run rollup
