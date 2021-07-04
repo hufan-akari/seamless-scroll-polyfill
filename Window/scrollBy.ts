@@ -14,7 +14,7 @@ export const windowScrollBy = (scrollByOptions?: ScrollToOptions, config?: IScro
     }
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(invalidBehaviorEnumValue("scrollBy", "Window", options.behavior!));
+        throw new TypeError(invalidBehaviorEnumValue("scrollBy", "Window", options.behavior));
     }
 
     const left = nonFinite(options.left) + (window.scrollX || window.pageXOffset);

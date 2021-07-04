@@ -381,7 +381,7 @@ export const elementScrollIntoView = (
     const options = scrollIntoViewOptions || {};
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(invalidBehaviorEnumValue("scrollIntoView", "Element", options.behavior!));
+        throw new TypeError(invalidBehaviorEnumValue("scrollIntoView", "Element", options.behavior));
     }
 
     const win = config?.window || window;

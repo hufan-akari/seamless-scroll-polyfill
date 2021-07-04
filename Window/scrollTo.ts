@@ -15,7 +15,7 @@ export const windowScrollTo = (scrollToOptions?: ScrollToOptions, config?: IScro
     }
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(invalidBehaviorEnumValue("scrollTo", "Window", options.behavior!));
+        throw new TypeError(invalidBehaviorEnumValue("scrollTo", "Window", options.behavior));
     }
 
     windowScrollWithOptions(win, options, config);

@@ -15,7 +15,7 @@ export const elementScrollTo = (element: Element, scrollToOptions?: ScrollToOpti
     }
 
     if (!checkBehavior(options.behavior)) {
-        throw new TypeError(invalidBehaviorEnumValue("scrollTo", "Element", options.behavior!));
+        throw new TypeError(invalidBehaviorEnumValue("scrollTo", "Element", options.behavior));
     }
 
     elementScrollWithOptions(element, options, config);
